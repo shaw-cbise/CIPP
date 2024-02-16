@@ -32,7 +32,7 @@ const AppSidebar = () => {
       visible={sidebarShow}
     >
       <CSidebarBrand className="me-auto pt-xs-2 p-md-2" to="/">
-        <CImage className="sidebar-brand-full mt-3" src={i} height={80} />
+        <CImage className="sidebar-brand-full mt-3" src="src/assets/images/CIPP.png" height={80} />
         <CHeaderNav className="me-2 p-2"></CHeaderNav>
       </CSidebarBrand>
       <CCloseButton
