@@ -220,7 +220,7 @@
         "buildProperties": {
           "appLocation": "/",
           "apiLocation": "",
-          "outputLocation": "/out"
+          "appArtifactLocation": ""
         }
       },
       "sku": {
