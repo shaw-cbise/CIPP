@@ -1,9 +1,4 @@
-﻿import {
-  EyeIcon,
-  TrashIcon,
-  MagnifyingGlassIcon,
-  PlayCircleIcon,
-} from "@heroicons/react/24/outline";
+﻿import { TrashIcon, MagnifyingGlassIcon, PlayCircleIcon } from "@heroicons/react/24/outline";
 import {
   Archive,
   MailOutline,
@@ -14,8 +9,12 @@ import {
   PhonelinkLock,
   Key,
   PostAdd,
-  Add,
   Gavel,
+  Language,
+  Outbox,
+  NotificationImportant,
+  DataUsage,
+  MailLock,
 } from "@mui/icons-material";
 
 export const CippExchangeActions = () => {
@@ -190,12 +189,27 @@ export const CippExchangeActions = () => {
       ],
     },
     {
-      label: "Set mailbox locale",
+      label: "Set Retention Hold",
+      type: "POST",
+      url: "/api/ExecSetRetentionHold",
+      data: { UPN: "UPN", Identity: "Id" },
+      confirmText: "What do you want to set Retention Hold to?",
+      icon: <MailLock />,
+      fields: [
+        {
+          type: "switch",
+          name: "disable",
+          label: "Disable Retention Hold",
+        },
+      ],
+    },
+    {
+      label: "Set Mailbox Locale",
       type: "POST",
       url: "/api/ExecSetMailboxLocale",
       data: { user: "UPN", ProhibitSendQuota: true },
       confirmText: "Enter a locale, e.g. en-US",
-      icon: <MailOutline />,
+      icon: <Language />,
       fields: [
         {
           label: "Locale",
@@ -211,7 +225,7 @@ export const CippExchangeActions = () => {
       url: "/api/ExecSetMailboxQuota",
       data: { user: "UPN", ProhibitSendQuota: true },
       confirmText: "Enter a quota. e.g. 1000MB, 10GB,1TB",
-      icon: <MailOutline />,
+      icon: <Outbox />,
       fields: [
         {
           label: "Quota",
@@ -230,7 +244,7 @@ export const CippExchangeActions = () => {
         ProhibitSendReceiveQuota: true,
       },
       confirmText: "Enter a quota. e.g. 1000MB, 10GB,1TB",
-      icon: <MailOutline />,
+      icon: <DataUsage />,
       fields: [
         {
           label: "Quota",
@@ -246,7 +260,7 @@ export const CippExchangeActions = () => {
       url: "/api/ExecSetMailboxQuota",
       data: { user: "UPN", IssueWarningQuota: true },
       confirmText: "Enter a quota. e.g. 1000MB, 10GB,1TB",
-      icon: <MailOutline />,
+      icon: <NotificationImportant />,
       fields: [
         {
           label: "Quota",
