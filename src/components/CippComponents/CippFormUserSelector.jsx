@@ -12,6 +12,7 @@ export const CippFormUserSelector = ({
   select,
   addedField,
   valueField,
+  dataFilter = null,
   ...other
 }) => {
   const currentTenant = useWatch({ control: formControl.control, name: "tenantFilter" });
@@ -30,7 +31,9 @@ export const CippFormUserSelector = ({
         dataKey: "Results",
         labelField: (option) => `${option.displayName} (${option.userPrincipalName})`,
         valueField: valueField ? valueField : "id",
-        queryKey: `ListUsers-${currentTenant?.value ? currentTenant.value : selectedTenant}`,
+        queryKey: `ListUsers-${currentTenant?.value ? currentTenant.value : selectedTenant}-${
+          select ? select : "default"
+        }`,
         data: {
           Endpoint: "users",
           manualPagination: true,
@@ -39,6 +42,12 @@ export const CippFormUserSelector = ({
           $orderby: "displayName",
           $top: 999,
         },
+        dataFilter: (options) => {
+          if (dataFilter) {
+            return options.filter(dataFilter);
+          }
+          return options;
+        }
       }}
       creatable={false}
       {...other}
