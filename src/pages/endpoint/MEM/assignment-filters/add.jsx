@@ -1,32 +1,36 @@
 import { Box } from "@mui/material";
-import { Grid } from "@mui/system";
 import CippFormPage from "../../../../components/CippFormPages/CippFormPage";
 import { Layout as DashboardLayout } from "/src/layouts/index.js";
 import { useForm } from "react-hook-form";
 import { useSettings } from "../../../../hooks/use-settings";
-import CippInviteUser from "../../../../components/CippFormPages/CippInviteGuest";
+import { useEffect } from "react";
+import CippAddAssignmentFilterForm from "../../../../components/CippFormPages/CippAddAssignmentFilterForm";
+
 const Page = () => {
   const userSettingsDefaults = useSettings();
 
   const formControl = useForm({
     mode: "onChange",
     defaultValues: {
-      tenantFilter: userSettingsDefaults.currentTenant,
+      assignmentFilterManagementType: "devices",
     },
   });
+
+  useEffect(() => {
+    formControl.setValue("tenantFilter", userSettingsDefaults?.currentTenant || "");
+  }, [userSettingsDefaults, formControl]);
 
   return (
     <>
       <CippFormPage
-        queryKey={`Users-${userSettingsDefaults.currentTenant}`}
+        queryKey={`AssignmentFilters-${userSettingsDefaults.currentTenant}`}
         formControl={formControl}
-        title="Guest User"
-        backButtonTitle="User Overview"
-        postUrl="/api/AddGuest"
+        title="Assignment Filter"
+        backButtonTitle="Assignment Filters"
+        postUrl="/api/AddAssignmentFilter"
       >
         <Box sx={{ my: 2 }}>
-          <Grid size={{ xs: 12 }}></Grid>
-          <CippInviteUser formControl={formControl} userSettingsDefaults={userSettingsDefaults} />
+          <CippAddAssignmentFilterForm formControl={formControl} />
         </Box>
       </CippFormPage>
     </>

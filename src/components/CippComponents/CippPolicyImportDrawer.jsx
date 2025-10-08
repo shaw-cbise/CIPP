@@ -47,6 +47,8 @@ export const CippPolicyImportDrawer = ({
     url:
       mode === "ConditionalAccess"
         ? `/api/ListCATemplates?TenantFilter=${tenantFilter?.value || ""}`
+        : mode === "Standards"
+        ? `/api/listStandardTemplates?TenantFilter=${tenantFilter?.value || ""}`
         : `/api/ListIntunePolicy?type=ESP&TenantFilter=${tenantFilter?.value || ""}`,
     queryKey: `TenantPolicies-${mode}-${tenantFilter?.value || "none"}`,
   });
@@ -70,7 +72,11 @@ export const CippPolicyImportDrawer = ({
   const importPolicy = ApiPostCall({
     urlFromData: true,
     relatedQueryKeys:
-      mode === "ConditionalAccess" ? ["ListCATemplates-table"] : ["ListIntuneTemplates-table"],
+      mode === "ConditionalAccess"
+        ? ["ListCATemplates-table"]
+        : mode === "Standards"
+        ? ["listStandardTemplates"]
+        : ["ListIntuneTemplates-table", "ListIntuneTemplates-autcomplete"],
   });
 
   const viewPolicyQuery = ApiPostCall({
@@ -118,6 +124,16 @@ export const CippPolicyImportDrawer = ({
           importPolicy.mutate({
             url: "/api/AddCATemplate",
             data: caTemplateData,
+          });
+        } else if (mode === "Standards") {
+          // For Standards templates, clone the template
+          importPolicy.mutate({
+            url: "/api/AddStandardTemplate",
+            data: {
+              tenantFilter: tenantFilter?.value,
+              templateId: policy.GUID,
+              clone: true,
+            },
           });
         } else {
           // For Intune policies, use existing format
@@ -484,7 +500,7 @@ export const CippPolicyImportDrawer = ({
           ) : (
             <CippJsonView
               object={viewingPolicy || {}}
-              type={mode === "ConditionalAccess" ? "conditionalaccess" : "intune"}
+              type={mode === "ConditionalAccess" ? "conditionalaccess" : mode === "Standards" ? "standards" : "intune"}
               defaultOpen={true}
             />
           )}

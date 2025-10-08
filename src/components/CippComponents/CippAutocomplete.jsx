@@ -6,7 +6,7 @@ import {
   TextField,
   IconButton,
 } from "@mui/material";
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { useSettings } from "../../hooks/use-settings";
 import { getCippError } from "../../utils/get-cipp-error";
 import { ApiGetCallWithPagination } from "../../api/ApiCall";
@@ -78,6 +78,8 @@ export const CippAutoComplete = (props) => {
 
   const [usedOptions, setUsedOptions] = useState(options);
   const [getRequestInfo, setGetRequestInfo] = useState({ url: "", waiting: false, queryKey: "" });
+  const hasPreselectedRef = useRef(false);
+  const autocompleteRef = useRef(null); // Ref for focusing input after selection
   const filter = createFilterOptions({
     stringify: (option) => JSON.stringify(option),
   });
@@ -207,19 +209,51 @@ export const CippAutoComplete = (props) => {
     return finalOptions;
   }, [api, usedOptions, options, removeOptions, sortOptions]);
 
-  // Dedicated effect for handling preselected value
+  // Dedicated effect for handling preselected value or auto-select first item - only runs once
   useEffect(() => {
-    if (preselectedValue && !defaultValue && !value && memoizedOptions.length > 0) {
-      const preselectedOption = memoizedOptions.find((option) => option.value === preselectedValue);
+    if (memoizedOptions.length > 0 && !hasPreselectedRef.current) {
+      // Check if we should skip preselection due to existing defaultValue
+      const hasDefaultValue =
+        defaultValue && (Array.isArray(defaultValue) ? defaultValue.length > 0 : true);
 
-      if (preselectedOption) {
-        const newValue = multiple ? [preselectedOption] : preselectedOption;
-        if (onChange) {
-          onChange(newValue, newValue?.addedFields);
+      if (!hasDefaultValue) {
+        // For multiple mode, check if value is empty array or null/undefined
+        // For single mode, check if value is null/undefined
+        const shouldPreselect = multiple
+          ? !value || (Array.isArray(value) && value.length === 0)
+          : !value;
+
+        if (shouldPreselect) {
+          let preselectedOption;
+
+          // Handle explicit preselected value
+          if (preselectedValue) {
+            preselectedOption = memoizedOptions.find((option) => option.value === preselectedValue);
+          }
+          // Handle auto-select first item from API
+          else if (api?.autoSelectFirstItem && memoizedOptions.length > 0) {
+            preselectedOption = memoizedOptions[0];
+          }
+
+          if (preselectedOption) {
+            const newValue = multiple ? [preselectedOption] : preselectedOption;
+            hasPreselectedRef.current = true; // Mark that we've preselected
+            if (onChange) {
+              onChange(newValue, newValue?.addedFields);
+            }
+          }
         }
       }
     }
-  }, [preselectedValue, defaultValue, value, memoizedOptions, multiple, onChange]);
+  }, [
+    preselectedValue,
+    defaultValue,
+    value,
+    memoizedOptions,
+    multiple,
+    onChange,
+    api?.autoSelectFirstItem,
+  ]);
 
   // Create a stable key that only changes when necessary inputs change
   const stableKey = useMemo(() => {
@@ -243,6 +277,7 @@ export const CippAutoComplete = (props) => {
 
   return (
     <Autocomplete
+      ref={autocompleteRef}
       key={stableKey}
       disabled={disabled || actionGetRequest.isFetching || isFetching}
       popupIcon={
@@ -327,6 +362,17 @@ export const CippAutoComplete = (props) => {
         if (onChange) {
           onChange(newValue, newValue?.addedFields);
         }
+
+        // In multiple mode, refocus the input after selection to allow continuous adding
+        if (multiple && newValue && autocompleteRef.current) {
+          // Use setTimeout to ensure the selection is processed first
+          setTimeout(() => {
+            const input = autocompleteRef.current?.querySelector("input");
+            if (input) {
+              input.focus();
+            }
+          }, 0);
+        }
       }}
       options={memoizedOptions}
       getOptionLabel={useCallback(
@@ -347,6 +393,20 @@ export const CippAutoComplete = (props) => {
         },
         [api]
       )}
+      onKeyDown={(event) => {
+        // Handle Tab key to select highlighted option
+        if (event.key === "Tab" && !event.shiftKey) {
+          // Check if there's a highlighted option
+          const listbox = document.querySelector('[role="listbox"]');
+          const highlightedOption = listbox?.querySelector('[data-focus="true"], .Mui-focused');
+
+          if (highlightedOption && listbox?.style.display !== "none") {
+            event.preventDefault();
+            // Trigger a click on the highlighted option
+            highlightedOption.click();
+          }
+        }
+      }}
       sx={sx}
       renderInput={(params) => (
         <Stack direction="row" spacing={1}>

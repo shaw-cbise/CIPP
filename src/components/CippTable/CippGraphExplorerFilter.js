@@ -28,6 +28,7 @@ const CippGraphExplorerFilter = ({
   onSubmitFilter,
   onPresetChange,
   component = "accordion",
+  relatedQueryKeys = [],
 }) => {
   const [offCanvasOpen, setOffCanvasOpen] = useState(false);
   const [cardExpanded, setCardExpanded] = useState(true);
@@ -162,7 +163,7 @@ const CippGraphExplorerFilter = ({
   }, [currentEndpoint, debouncedRefetch]);
 
   const savePresetApi = ApiPostCall({
-    relatedQueryKeys: ["ListGraphExplorerPresets", "ListGraphRequest"],
+    relatedQueryKeys: ["ListGraphExplorerPresets*", "ListGraphRequest", ...relatedQueryKeys],
   });
 
   // Save preset function
@@ -397,6 +398,9 @@ const CippGraphExplorerFilter = ({
         <Typography variant="h5" sx={{ mb: 2 }}>
           Import / Export Graph Explorer Preset
         </Typography>
+        <Typography variant="body2" sx={{ mb: 2 }}>
+          Copy the JSON below to export your preset, or paste a preset JSON to import it.
+        </Typography>
         <CippCodeBlock
           type="editor"
           onChange={(value) => setEditorValues(JSON.parse(value))}
@@ -411,6 +415,7 @@ const CippGraphExplorerFilter = ({
           }}
           variant="contained"
           color="primary"
+          sx={{ mt: 2 }}
         >
           Import Template
         </Button>

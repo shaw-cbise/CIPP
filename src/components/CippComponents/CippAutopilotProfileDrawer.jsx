@@ -147,7 +147,7 @@ export const CippAutopilotProfileDrawer = ({
               label="Unique Name Template"
               name="DeviceNameTemplate"
               formControl={formControl}
-              placeholder="Leave blank for none"
+              placeholder="Ex. %SERIAL%, %RAND:x% or leave blank for none"
             />
           </Grid>
 
@@ -188,6 +188,8 @@ export const CippAutopilotProfileDrawer = ({
               label="Hide Change Account Options"
               name="HideChangeAccount"
               formControl={formControl}
+              disabled={true}
+              helperText="This setting requires Hybrid Azure AD Join which is not supported in CIPP"
             />
             <CippFormComponent
               type="switch"

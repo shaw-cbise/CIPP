@@ -14,6 +14,7 @@
     "CIPP",
     "CIPP-API",
     "Datto",
+    "DMARC",
     "Entra",
     "ESET",
     "GDAP",
@@ -29,10 +30,11 @@
     "Reshare",
     "Rewst",
     "Sherweb",
+    "superadmin",
     "Syncro",
     "TERRL",
-    "Yubikey",
-    "DMARC"
+    "unconfigured",
+    "Yubikey"
   ],
   "ignoreWords": [
     "Addins",
