@@ -2,25 +2,39 @@ import PropTypes from "prop-types";
 import { CippAutoComplete } from "../CippComponents/CippAutocomplete";
 import { ApiGetCall } from "../../api/ApiCall";
 import { IconButton, SvgIcon, Tooltip, Box } from "@mui/material";
-import { FilePresent, Laptop, Mail, Refresh, Share, Shield, ShieldMoon, PrecisionManufacturing, BarChart } from "@mui/icons-material";
+import {
+  FilePresent,
+  Laptop,
+  Mail,
+  Refresh,
+  Share,
+  Shield,
+  ShieldMoon,
+  PrecisionManufacturing,
+  BarChart,
+} from "@mui/icons-material";
 import {
   BuildingOfficeIcon,
   GlobeAltIcon,
   ServerIcon,
   UsersIcon,
 } from "@heroicons/react/24/outline";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { useRouter } from "next/router";
 import { CippOffCanvas } from "./CippOffCanvas";
 import { useSettings } from "../../hooks/use-settings";
 import { getCippError } from "../../utils/get-cipp-error";
+import { useQueryClient } from "@tanstack/react-query";
 
 export const CippTenantSelector = (props) => {
   const { width, allTenants = false, multiple = false, refreshButton, tenantButton } = props;
   //get the current tenant from SearchParams called 'tenantFilter'
   const router = useRouter();
   const settings = useSettings();
+  const queryClient = useQueryClient();
   const tenant = router.query.tenantFilter ? router.query.tenantFilter : settings.currentTenant;
+  const routerUpdateTimeoutRef = useRef(null);
+
   // Fetch tenant list
   const tenantList = ApiGetCall({
     url: "/api/listTenants",
@@ -44,7 +58,7 @@ export const CippTenantSelector = (props) => {
   });
 
   // Filter portal actions based on user preferences
-  const getFilteredPortalActions = () => {
+  const filteredPortalActions = useMemo(() => {
     // Define all available portal actions with current tenant data
     const allPortalActions = [
       {
@@ -140,13 +154,21 @@ export const CippTenantSelector = (props) => {
       portalLinks = defaultLinks;
     }
 
-    const filteredActions = allPortalActions.filter(action => {
+    const filteredActions = allPortalActions.filter((action) => {
       const isEnabled = portalLinks[action.key] === true;
       return isEnabled;
     });
 
+    // insert a Manage Tenant link at the start
+    filteredActions.unshift({
+      key: "Manage_Tenant",
+      label: "Manage Tenant",
+      link: `/tenant/manage/edit?tenantFilter=${currentTenant?.value}`,
+      icon: <BuildingOfficeIcon />,
+    });
+
     return filteredActions;
-  };
+  }, [currentTenant, settings]);
 
   // This effect handles updates when the tenant is changed via dropdown selection
   useEffect(() => {
@@ -154,6 +176,15 @@ export const CippTenantSelector = (props) => {
     if (currentTenant?.value) {
       const query = { ...router.query };
       if (query.tenantFilter !== currentTenant.value) {
+        // Clear any pending timeout
+        if (routerUpdateTimeoutRef.current) {
+          clearTimeout(routerUpdateTimeoutRef.current);
+        }
+
+        // Cancel all in-flight queries before changing tenant
+        queryClient.cancelQueries();
+
+        // Update router and settings
         query.tenantFilter = currentTenant.value;
         router.replace(
           {
@@ -163,10 +194,11 @@ export const CippTenantSelector = (props) => {
           undefined,
           { shallow: true }
         );
+
+        settings.handleUpdate({
+          currentTenant: currentTenant.value,
+        });
       }
-      settings.handleUpdate({
-        currentTenant: currentTenant.value,
-      });
       //if we have a tenantfilter, we add the tenantfilter to the title of the tab/page so its "Tenant - original title".
     }
   }, [currentTenant?.value]);
@@ -249,6 +281,15 @@ export const CippTenantSelector = (props) => {
       );
     }
   }, [tenant, tenantList.isSuccess, currentTenant]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (routerUpdateTimeoutRef.current) {
+        clearTimeout(routerUpdateTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <>
@@ -345,7 +386,7 @@ export const CippTenantSelector = (props) => {
           "onPremisesLastSyncDateTime",
           "onPremisesLastPasswordSyncDateTime",
         ]}
-        actions={getFilteredPortalActions()}
+        actions={filteredPortalActions}
       />
     </>
   );
